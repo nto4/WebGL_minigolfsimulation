@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute vec4 vPosition;
+attribute vec4 vColor;
+attribute vec2 vTexCoord;
+attribute vec4 vNormal;
+varying vec4 fColor;
+varying float s,t;
+varying vec2 fTexCoord;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+uniform vec4 lightPosition;
+uniform float shininess;
+uniform vec3 eyePosition;
+uniform int bTexCoord1;
+
+
+void
+main()
+{
+	float pi = acos(0.0);
+	s =0.5*acos(vPosition.x)/pi;;
+	t = 0.5*asin(vPosition.y/sqrt(1.0-vPosition.x*vPosition.x))/pi;
+	 vec3 L;
+    if(lightPosition.w == 0.0)  L = normalize( lightPosition.xyz);
+    else  L = normalize( (lightPosition - vPosition) .xyz);
+
+	
+    vec3 E = normalize( eyePosition);
+    
+    vec3 H = normalize( L + E );
+
+    
+    // Transform vertex normal into eye coordinates
+    
+    vec3 N = normalize(vNormal.xyz);
+
+    // Compute terms in the illumination equation
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(N, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+    
+    if( dot(L, N) < 0.0 ) {
+	specular = vec4(0.0, 0.0, 0.0, 1.0);
+    } 
+
+
+    
+    gl_Position = projectionMatrix*modelViewMatrix*vPosition;
+	
+     fColor = vColor*(ambient + diffuse +specular);
+
+    fColor.a = 1.0;
+
+//fColor = vColor;
+    fTexCoord = vTexCoord;
+
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+varying vec4 fColor;
+
+varying float s,t;
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+uniform sampler2D texture4;
+uniform sampler2D texture5;
+uniform int bTexCoord;
+varying vec2 fTexCoord;
+
+void
+main()
+{
+
+   if(bTexCoord == 1)
+		gl_FragColor =texture2D(texture1,vec2(s,t));
+	else if(bTexCoord == 0)
+		gl_FragColor =fColor;
+	else if(bTexCoord == 2)
+		gl_FragColor =fColor*texture2D(texture2,fTexCoord);
+	else if(bTexCoord == 3)
+		gl_FragColor =texture2D(texture3,fTexCoord);
+		else if(bTexCoord == 4)
+		gl_FragColor =texture2D(texture4,fTexCoord);
+	else if(bTexCoord == 5)
+		gl_FragColor =texture2D(texture5,fTexCoord);
+		
+}
+</script>
+<style>
+.mainSlider {
+  -webkit-appearance: none;
+  width: 20%;
+  height: 10px;
+  background: #00FFFF;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 50%;
+  height: 10px;
+  background: #00FFFF;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 2;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 15px;
+  background: #B35265;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 10px;
+  height: 15px;
+  background: #B35265;
+  cursor: pointer;
+}
+  
+#main-div{
+background : #FF3D3E;
+width:100%;
+clear:both;
+float:left;
+height:auto;
+}  
+#first-cube{
+background :#FFFC09;
+width:30%;
+float:left;
+height:auto;
+margin-left:1%;
+border-style: ridge;
+}
+#second-cube{
+background : #C4ECB9;
+width:17%;
+float:left;
+height:auto;
+border-style: ridge;
+margin-left:3%;
+}
+#orbital{
+background : #FFFC09;
+width:auto;
+float:left;
+height:auto;
+border-style: ridge;
+margin-left:3%;
+}
+#gl-canvas{
+border-style: dotted;
+}
+.p-pad{
+padding-left:8px;
+}
+
+.dottedDiv{
+  border-style: ridge;
+ 
+}
+</style>
+<p> </p>
+
+
+ <div id="second-cube">Power<input type="range" min="0" max="10" value="1" class="slidert" id="guc"></div>
+<div id="second-cube">
+momentum<input type="range" min="1" max="4" value="1" class="slidert" id="hiz"></div>
+<div id="second-cube">Left<input type="range" min="-3" max="3" value="1" class="slidert" id="x_h">Right</div>
+<div id="second-cube">Shiness<input type="range" min="-10" max="-1" value="1" class="slidert" id="shines"></div>
+
+<div id="orbital"><button id = "Button3">Again</button></div>
+
+
+<script type="text/javascript" src="../golf/webgl-utils.js"></script>
+<script type="text/javascript" src="../golf/initShaders.js"></script>
+<script type="text/javascript" src="../golf/MV.js"></script>
+<script type="text/javascript" src="proje.js"></script>
+
+
+<center><canvas id="gl-canvas" width="1200" height="600">Oops ... your browser doesn't support the HTML5 canvas element</canvas></center>	
+	
+	
+		<div id="first-cube">
+		<p class="p-pad"><strong>Golf Sopası</strong></p>
+		<p class="p-pad"><span>Translate_X : </span><input type="range" min="-10" max="+10" value="1" class="slider" id="gs_translate_x"></p>
+		<p class="p-pad"><span>Translate_Y : </span><input type="range" min="-10" max="10" value="1" class="slider" id="gs_translate_y"></p><p class="p-pad"><span>Translate_Z : </span><input type="range" min="-10" max="10" value="1" class="slider" id="gs_translate_z"></p>
+		<p class="p-pad">Rotate Direction : <button id= "gs_rotate_x">Rotate X</button><button id= "gs_rotate_y">Rotate Y</button><button id= "gs_rotate_z">Rotate Z</button></p>
+		<p class="p-pad"><span id="spdRotCap">Scale :</span><input type="range" min="1" max="100" value="5" class="slider" id="gs_s"></p>
+		</div>
+		<div id="first-cube">
+		<p class="p-pad"><strong>Golf Topu</strong></p>
+		<p class="p-pad"><span>Translate_X : </span><input type="range" min="-10" max="10" value="1" class="slider" id="gt_translate_x"></p>
+		<p class="p-pad"><span>Translate_Y : </span><input type="range" min="-10" max="10" value="1" class="slider" id="gt_translate_y"></p><p class="p-pad"><span>Translate_Z : </span><input type="range" min="-10" max="10" value="1" class="slider" id="gt_translate_z"></p>
+		<p class="p-pad">Rotate Direction : <button id= "gt_rotate_x">Rotate X</button><button id= "gt_rotate_y">Rotate Y</button><button id= "gt_rotate_z">Rotate Z</button></p>
+		<p class="p-pad"><span id="spdRotCap">Scale :</span><input type="range" min="1" max="5" value="1" class="slider" id="gt_s"></p>
+		</div>
+		<div id="first-cube">
+		<p class="p-pad"><strong>Hedef</strong></p>
+		<p class="p-pad"><span>Translate_X : </span><input type="range" min="-6" max="6" value="1" class="slider" id="gb_translate_x"></p>
+		<p class="p-pad"><span>Translate_Y : </span><input type="range" min="-10" max="10" value="1" class="slider" id="gb_translate_y"></p><p class="p-pad"><span>Translate_Z : </span><input type="range" min="-16" max="16" value="0.5" class="slider" id="gb_translate_z"></p>
+		<p class="p-pad">Rotate Direction : <button id= "gb_rotate_x">Rotate X</button><button id= "gb_rotate_y">Rotate Y</button><button id= "gb_rotate_z">Rotate Z</button></p>
+		<p class="p-pad"><span id="spdRotCap">Scale :</span><input type="range" min="1" max="5" value="1" class="slider" id="gb_s"></p>
+		</div>
+		
+	</div>
+<img id = "texImage" src = "cimen.jpg" hidden></img>
+<img id ="texImage1" src = "top_g.gif" hidden></img>
+<img id ="texImage2" src = "top_g.gif" hidden></img>
+<img id = "texImage3" src = "2.gif" hidden></img>
+<img id ="texImage4" src = "dd.jpg" hidden></img>
+<img id ="texImage5" src = "top_g.gif" hidden></img>
+
+</body>
+</html>
